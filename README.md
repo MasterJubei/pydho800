@@ -1,5 +1,5 @@
 # Rigol DHOxxx oscilloscope Python library (unofficial)
-# Based completely on https://github.com/tspspi/pymso5000/tree/master by tspspi
+## Based completely on https://github.com/tspspi/pymso5000/tree/master by tspspi
 
 ![A Rigol DHO800 setup](/doc/dhophoto.jpg)
 
