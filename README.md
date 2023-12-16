@@ -19,7 +19,7 @@ pip install pydho800-tspspi
 
 ## Simple example to fetch waveforms:
 
-```
+```python
 from dho800.dho800 import DHO800
 
 with DHO800(address = "10.0.0.123") as dho:
@@ -70,7 +70,7 @@ To request calculation of statistics pass the string for the
 desired statistic or a list of statistics to the ```stats```
 parameter of ```query_waveform```:
 
-```
+```python
 with DHO800(address = "10.0.0.123") as dho:
 	data = dho.query_waveform((1,2), stats = [ 'mean', 'fft' ])
 ```
