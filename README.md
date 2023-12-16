@@ -14,7 +14,7 @@ exposes the public interface.
 There is a PyPi package that can be installed using
 
 ```
-pip install pydho800-tspspi
+pip install pydho800
 ```
 
 ## Simple example to fetch waveforms:
