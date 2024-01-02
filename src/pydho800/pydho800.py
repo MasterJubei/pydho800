@@ -14,7 +14,7 @@ import socket
 import logging
 import datetime
 
-class DHO800(Oscilloscope):
+class PYDHO800(Oscilloscope):
     def __init__(
         self,
 
