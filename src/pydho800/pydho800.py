@@ -23,8 +23,8 @@ class PYDHO800(Oscilloscope):
 
         useNumpy = False,
         
-        rawMode = False,     # Sets the number of samples to retrieve up to the current memory depth of the scope
-        samplePoints = 1000, 
+        rawMode = True,      # Sets the number of samples to retrieve up to the current memory depth of the scope
+        samplePoints = 1000, # Only relevent when rawMode is False, max is 1000 when rawMode is False
     ):
         self._scpi = SCPIDeviceEthernet(address, port, None)
         self._rawMode = rawMode
