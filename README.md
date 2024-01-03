@@ -33,22 +33,25 @@ pip install pydho800
 from pydho800.pydho800 import PYDHO800
 
 with DHO800(address = "10.0.0.123") as dho:
-   print(f"Identify: {dho.identify()}")
+    print(f"Identify: {dho.identify()}")
 
-   dho.set_channel_enable(0, True)
-   dho.set_channel_enable(1, True)
+    dho.set_channel_enable(0, True)
+    dho.set_channel_enable(1, True)
 
-   data = dho.query_waveform((0, 1))
-   print(data)
+    dho.set_run_mode(OscilloscopeRunMode.RUN)
+    dho.set_run_mode(OscilloscopeRunMode.STOP)
 
-   import matplotlib.pyplot as plt
-   plt.plot(data['x'], data['y0'], label = "Ch1")
-   plt.plot(data['x'], data['y1'], label = "Ch2")
+    data = dho.query_waveform((0, 1))
+    print(data)
 
-   # Note if only one channel were enabled, it would be accessed by:
-   # plt.plot(data['x'], data['y'], label = "Ch1")
+    import matplotlib.pyplot as plt
+    plt.plot(data['x'], data['y0'], label = "Ch1")
+    plt.plot(data['x'], data['y1'], label = "Ch2")
 
-   plt.show()
+    # Note if only one channel were enabled, it would be accessed by:
+    # plt.plot(data['x'], data['y'], label = "Ch1")
+
+    plt.show()
 ```
 
 Note that ```numpy``` usage is optional for this implementation.
