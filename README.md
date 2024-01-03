@@ -4,10 +4,20 @@
 ![A Rigol DHO800 setup](/doc/dhophoto.jpg)
 
 A simple Python library and utility to control and query data from
-Rigol DHOxxx oscilloscopes (not supporting all features of the oscilloscope,
-work in progress). This library implements the [Oscilloscope](https://github.com/tspspi/pylabdevs/blob/master/src/labdevices/oscilloscope.py) class from
+Rigol DHOxxx oscilloscopes. This library implements the [Oscilloscope](https://github.com/tspspi/pylabdevs/blob/master/src/labdevices/oscilloscope.py) class from
 the [pylabdevs](https://github.com/tspspi/pylabdevs) package which
 exposes the public interface.
+
+When retrieving sample point data from the scope, the number of points retrieved is set by the scope's memory depth. 
+
+The default memory depth of the scope is set to 10k points. 
+This can be changed by accessing the following menus on the scope:
+
+Click on any channel and click "Acquisition":
+![Click on any Channel](/doc/dho800_aq1.jpg)
+
+Change the memory depth:
+![Change the memory depth](/doc/dho800_aq2.jpg)
 
 ## Installing 
 
@@ -34,6 +44,10 @@ with DHO800(address = "10.0.0.123") as dho:
    import matplotlib.pyplot as plt
    plt.plot(data['x'], data['y0'], label = "Ch1")
    plt.plot(data['x'], data['y1'], label = "Ch2")
+
+   # Note if only one channel were enabled, it would be accessed by:
+   # plt.plot(data['x'], data['y'], label = "Ch1")
+
    plt.show()
 ```
 
