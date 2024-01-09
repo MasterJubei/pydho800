@@ -13,6 +13,7 @@ import socket
 
 import logging
 import datetime
+from enum import Enum
 
 class PYDHO800(Oscilloscope):
     def __init__(
@@ -23,8 +24,8 @@ class PYDHO800(Oscilloscope):
 
         useNumpy = False,
         
-        rawMode = True,      # Sets the number of samples to retrieve up to the current memory depth of the scope
-        samplePoints = 1000, # Only relevent when rawMode is False, max is 1000 when rawMode is False
+        rawMode = False,     # Sets the number of samples to retrieve up to the current memory depth of the scope
+        samplePoints = 1000, 
     ):
         self._scpi = SCPIDeviceEthernet(address, port, None)
         self._rawMode = rawMode
@@ -419,7 +420,7 @@ class PYDHO800(Oscilloscope):
     
     def _get_num_points(self):
         resp = self._scpi.scpiQuery(":WAV:POIN?")
-        return resp     
+        return resp
 
     def _query_waveform(self, channel, stats = None):
         """ When raw mode is enabled, the number of points is set by the scope's memory depth setting
@@ -530,4 +531,26 @@ class PYDHO800(Oscilloscope):
         }
 
         return res
+    
+    def get_memory_depth(self):
+        resp = self._scpi.scpiQuery(":ACQ:MDEP?")
+        return resp
+    
 
+    class memory_depth_t(Enum):
+        """ These are in number of samples from the scope, not bytes """
+        AUTO = "AUTO"
+        M_1K = "1k"
+        M_10K = "10k"
+        M_100K = "100k"
+        M_1M = "1M"
+        M_10M = "10M"
+        M_25M = "25M"
+        M_50M = "50M"
+        
+    def set_memory_depth(self, depth: memory_depth_t):
+        if not isinstance(depth, self.memory_depth_t):
+            raise ValueError("Invalid memory depth specified")
+
+        self._scpi.scpiCommand(f":ACQ:MDEP {depth.value}")
+    
