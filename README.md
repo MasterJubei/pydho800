@@ -11,7 +11,9 @@ exposes the public interface.
 When retrieving sample point data from the scope, the number of points retrieved is set by the scope's memory depth. 
 
 The default memory depth of the scope is set to 10k points. 
-This can be changed by accessing the following menus on the scope:
+This can be changed through the set_memory_depth() function
+
+Alternatively this can be changed by accessing the following menus on the scope:
 
 Click on any channel and click "Acquisition":
 ![Click on any Channel](/doc/dho800_aq1.jpg)
