@@ -13,7 +13,7 @@ import socket
 
 import logging
 import datetime
-from enum import Enum
+from enum import Enum, IntEnum
 
 class PYDHO800(Oscilloscope):
     def __init__(
@@ -480,18 +480,17 @@ class PYDHO800(Oscilloscope):
         
         """ Only relevent for raw mode wheree more than 999_999 samples are requested
             Every 999_999 samples, there is a gltich where two samples are received on one line
-            Incase Rigol fixes this, we make sure the length of the line is greater than one data point """
+            Incase Rigol fixes this, we make sure the length of the line is greater than one data point 
+            EDIT: The interval is different on the DHO914S, so we only check for the length of the line being greater than one sample point """
         i = 0
-        loop_cnt = 0
 
         while(i < len(wavedata)):
             try:
-                if(i == 999_999 + (loop_cnt * 1_000_000) and len(wavedata[i]) > 14):
+                if(len(wavedata[i]) > 14):
                     two_fold = wavedata[i].split('e', 1)
                     first_num = two_fold[0] + 'e' + two_fold[1][:3]
                     second_num = two_fold[1][3:]
-                    loop_cnt += 1
-
+                    
                     wavedata.pop(i)
                     wavedata.insert(i, float(first_num))
                     wavedata.insert(i+1, float(second_num))
@@ -554,3 +553,55 @@ class PYDHO800(Oscilloscope):
 
         self._scpi.scpiCommand(f":ACQ:MDEP {depth.value}")
     
+
+    # Signal Generator Settings (Only relevant for DHO914S and DHO924S)
+        
+    class signal_gen_waveform_t(Enum):
+        SINE = "SIN",
+        SQUARE = "SQU",
+        RAMP = "RAMP",
+        DC = "DC",
+        NOISE = "NOIS",
+        ARB = "ARB"
+
+    def set_signal_gen_waveform(self, waveform: signal_gen_waveform_t):
+        if not isinstance(waveform, self.signal_gen_waveform_t):
+            raise ValueError("Invalid waveform specified")
+
+        self._scpi.scpiCommand(f":SOUR:FUNC {waveform.value}")
+
+    def get_signal_gen_waveform(self):
+        resp = self._scpi.scpiQuery(":SOUR:FUNC?")
+        return resp
+
+    def set_signal_gen_freq(self, freq_Hz):
+        self._scpi.scpiCommand(f":SOUR:FREQ {freq_Hz}")
+
+    def get_signal_gen_freq(self):
+        resp = self._scpi.scpiQuery(":SOUR:FREQ?")
+        return resp
+    
+    def set_signal_gen_phase(self, phase_deg:float):
+        """ Input is in degrees """
+        self._scpi.scpiCommand(f":SOUR:PHAS {phase_deg}")
+
+    def get_signal_gen_phase(self):
+        resp = self._scpi.scpiQuery(":SOUR:PHAS?")
+        return resp
+    
+    def set_signal_gen_amp(self, amp_Vpp: float):
+        """ Input is in volts, max is 10Vpp"""
+        print(f"Setting amp to {amp_Vpp}")
+        self._scpi.scpiCommand(f":SOUR:VOLT:AMPL {amp_Vpp}")
+
+    def get_signal_gen_amp(self):
+        resp = self._scpi.scpiQuery(":SOUR:VOLT:AMPL?")
+        return resp
+    
+    def set_signal_gen_offset(self, offset_V: float):
+        """ Input is in volts"""
+        self._scpi.scpiCommand(f":SOUR:VOLT:OFFS {offset_V}")
+
+    def get_signal_gen_offset(self):
+        resp = self._scpi.scpiQuery(":SOUR:VOLT:OFFS?")
+        return resp
