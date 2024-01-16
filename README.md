@@ -40,6 +40,20 @@ with DHO800(address = "10.0.0.123") as dho:
     dho.set_channel_enable(0, True)
     dho.set_channel_enable(1, True)
 
+    dho.set_channel_scale(0,.1)    # 100 mV/div
+    dho.set_timebase_scale(100e-6) # 100 us/div
+
+    # Set memory depth to 10 million samples
+    tx_depth = dho.memory_depth_t.M_10M
+    dho.set_memory_depth(tx_depth)
+
+    # DHO914S/DHO924S specific for the signal generator
+    signal_gen_waveform = dho.signal_gen_waveform_t.SINE
+    dho.set_signal_gen_waveform(signal_gen_waveform)
+    dho.set_signal_gen_amp(3.5)      # 3.5 Vpp
+    dho.set_signal_gen_freq(1*10**6) # 1 MHz
+
+    # Back to the oscilloscope
     dho.set_run_mode(OscilloscopeRunMode.RUN)
     dho.set_run_mode(OscilloscopeRunMode.STOP)
 
