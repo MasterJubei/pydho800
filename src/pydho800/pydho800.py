@@ -2,7 +2,7 @@ from labdevices.exceptions import CommunicationError_ProtocolViolation
 from labdevices.exceptions import CommunicationError_Timeout
 from labdevices.exceptions import CommunicationError_NotConnected
 
-from labdevices.oscilloscope import Oscilloscope, OscilloscopeSweepMode, OscilloscopeTriggerMode, OscilloscopeTimebaseMode, OscilloscopeRunMode
+from labdevices.oscilloscope import Oscilloscope, OscilloscopeSweepMode, OscilloscopeTriggerMode, OscilloscopeTimebaseMode, OscilloscopeRunMode, OscilloscopeCouplingMode
 from labdevices.scpi import SCPIDeviceEthernet
 import atexit
 import re
@@ -14,6 +14,30 @@ import socket
 import logging
 import datetime
 from enum import Enum, IntEnum
+
+class OscilloscopeMeasurementType(Enum):
+    VPP = 0
+    RRPH = 1
+    FFPH = 2
+    VMIN = 3
+    VMAX = 4
+    VRMS = 5
+    VAVG = 6
+    OVER = 7
+    FREQ = 8
+    PER = 9
+    
+    @classmethod
+    def has_value(cls, v):
+        return v in cls._value2member_map_
+    
+class OscilloscopeBandwidthMode(Enum):
+    OFF = 0
+    BW20 = 1
+    
+    @classmethod
+    def has_value(cls, v):
+        return v in cls._value2member_map_
 
 class PYDHO800(Oscilloscope):
     def __init__(
@@ -53,6 +77,12 @@ class PYDHO800(Oscilloscope):
                 OscilloscopeRunMode.RUN,
                 OscilloscopeRunMode.SINGLE
             ],
+            supportedChannelCouplingModes = [
+                OscilloscopeCouplingMode.GND,
+                OscilloscopeCouplingMode.AC,
+                OscilloscopeCouplingMode.DC
+            ],
+            
             timebaseScale = (5e-9, 1000.0),
 			voltageScale = (500e-6, 10),
             triggerForceSupported = True
@@ -284,7 +314,7 @@ class PYDHO800(Oscilloscope):
 
         raise CommunicationError_ProtocolViolation(f"Unknown response for timebase scale: {resp}")
 
-    def _set_channel_coupling(self, channel, mode):
+    def _set_channel_coupling(self, channel, couplingMode):
         if (channel < 0) or (channel > 3):
             raise ValueError(f"Supplied channel number {channel} is out of bounds")
 
@@ -294,10 +324,10 @@ class PYDHO800(Oscilloscope):
             OscilloscopeCouplingMode.GND : "GND"
         }
 
-        if mode not in modestr:
-            raise ValueError(f"Unsupported coupling mode {mode}")
+        if couplingMode not in modestr:
+            raise ValueError(f"Unsupported coupling mode {couplingMode}")
 
-        self._scpi.scpiCommand(f":CHAN{channel+1}:COUP {modestr[mode]}")
+        self._scpi.scpiCommand(f":CHAN{channel+1}:COUP {modestr[couplingMode]}")
 
     def _get_channel_coupling(self, channel):
         if (channel < 0) or (channel > 3):
@@ -350,10 +380,16 @@ class PYDHO800(Oscilloscope):
         if currentProbeRatio is None:
             raise CommunicationError_ProtocolViolation("Failed to query current probe ratio")
         scale = scale / currentProbeRatio
-        if scale not in setableScales:
+        
+        match_scale = 0
+        for _scale in setableScales:
+            if (float(_scale) < float(scale)):
+                match_scale = _scale
+                
+        if match_scale not in setableScales:
             raise ValueError("Scale out of range [{500e-6 * currentProbeRatio};{10 * currentProbeRatio}] ({currentProbeRatio}x probe selected) in 1,2,5 steps")
 
-        self._scpi.scpiCommand(f":CHAN{channel+1}:SCAL {scale}")
+        self._scpi.scpiCommand(f":CHAN{channel+1}:SCAL {match_scale}")
 
     def _get_channel_scale(self, channel):
         if (channel < 0) or (channel > 3):
@@ -535,6 +571,70 @@ class PYDHO800(Oscilloscope):
         resp = self._scpi.scpiQuery(":ACQ:MDEP?")
         return resp
     
+    def get_channel_bandwidth(self, channel):
+        if (channel < 0) or (channel > 3):
+            raise ValueError("Invalid channel number for DHO800/900")
+        resp = self._scpi.scpiQuery(f":CHAN{channel+1}:BWL?")
+        return resp
+    
+    def set_channel_bandwidth(self, channel, bandwidth = 'OFF'):
+        bw_modes = {
+            "OFF"   : OscilloscopeBandwidthMode.OFF,
+            "20M"   : OscilloscopeBandwidthMode.BW20
+        }
+        
+        if (channel < 0) or (channel > 3):
+            raise ValueError("Invalid channel number for DHO800/900")
+            
+        if bandwidth not in bw_modes:
+            raise ValueError(f"Unsupported OscilloscopeBandwidthMode {bandwidth}")
+            
+        resp = self._scpi.scpiCommand(f":CHAN{channel+1}:BWL {bandwidth}")
+        return resp
+    
+    def get_channel_measurement(self, type, channel = None, refchannel = None):
+        typestr = {
+            "VPP" : OscilloscopeMeasurementType.VPP ,
+            "RRPH" : OscilloscopeMeasurementType.RRPH ,
+            "FFPH" : OscilloscopeMeasurementType.FFPH ,
+            "VMIN" : OscilloscopeMeasurementType.VMIN ,
+            "VMAX" : OscilloscopeMeasurementType.VMAX ,
+            "VRMS" : OscilloscopeMeasurementType.VRMS ,
+            "VAVG" : OscilloscopeMeasurementType.VAVG ,
+            "OVER" : OscilloscopeMeasurementType.OVER ,
+            "FREQ" : OscilloscopeMeasurementType.FREQ ,
+            "PER" : OscilloscopeMeasurementType.PER 
+        }
+        if (channel < 0) or (channel > 3):
+            raise ValueError("Invalid channel number for DHO800/900")
+            
+        if type not in typestr:
+            raise ValueError(f"Unsupported OscilloscopeMeasurementType {type}")
+            
+        if (channel is None):
+            raise ValueError(f"Missing channel parameter in function call for type {type}")
+            
+        if ((typestr[type] is OscilloscopeMeasurementType.RRPH) or (typestr[type] is OscilloscopeMeasurementType.FFPH)):
+            if (refchannel is None):
+                raise ValueError(f"Missing refchannel parameter in function call for type {type}")
+            else:
+                if (refchannel < 0) or (refchannel > 3):
+                    raise ValueError("Invalid refchannel number for DHO800/900")
+                
+            # out of range scope resonse is 9.9e+37
+            resp1 = 0
+            resp2 = 1
+            while((resp1 >= 9.9e+37) or (abs(resp1) > (abs(resp2) * 1.1)) or  (abs(resp1) < (abs(resp2) * 0.9))):
+                resp1 = float(self._scpi.scpiQuery(f":MEAS:ITEM? {type},CHAN{refchannel+1},CHAN{channel+1}"))
+                resp2 = float(self._scpi.scpiQuery(f":MEAS:ITEM? {type},CHAN{refchannel+1},CHAN{channel+1}"))
+            resp = (resp1 + resp2 ) /2
+        else:
+            resp = self._scpi.scpiQuery(f":MEAS:ITEM? {type},CHAN{channel+1}")
+                        
+        if (resp is None):
+            raise CommunicationError_ProtocolViolation("Failed measurement from DHO800")
+        return resp
+    
 
     class memory_depth_t(Enum):
         """ These are in number of samples from the scope, not bytes """
@@ -605,3 +705,4 @@ class PYDHO800(Oscilloscope):
     def get_signal_gen_offset(self):
         resp = self._scpi.scpiQuery(":SOUR:VOLT:OFFS?")
         return resp
+    
