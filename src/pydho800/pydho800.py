@@ -612,7 +612,7 @@ class PYDHO800(Oscilloscope):
             raise ValueError(f"Unsupported OscilloscopeMeasurementType {type}")
             
         if (channel is None):
-            raise ValueError(f"Missing channel parameter in function call for type {type}")
+            raise ValueError(f"Missing channel parameter in function call for channel {channel}")
             
         if ((typestr[type] is OscilloscopeMeasurementType.RRPH) or (typestr[type] is OscilloscopeMeasurementType.FFPH)):
             if (refchannel is None):

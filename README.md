@@ -105,7 +105,33 @@ parameter of ```query_waveform```:
 
 ```python
 with DHO800(address = "10.0.0.123") as dho:
-	data = dho.query_waveform((1,2), stats = [ 'mean', 'fft' ])
+    data = dho.query_waveform((1,2), stats = [ 'mean', 'fft' ])
+```
+
+
+## Get Measurement Data
+The DHO800/900 has in-built measurement functions.
+This package release supports the 10 most common used functions:
+
+* **VPP**: indicates the voltage value from the highest point to the lowest point of the waveform.
+* **RRPH**: indicates the phase deviation between the threshold middle values of the rising edge of Source A and that of Source B.
+* **FFPH**: indicates the phase deviation between the threshold middle values of the falling edge of Source A and that of Source B.
+* **VMIN**: indicates the voltage value from the lowest point of the waveform to the GND.
+* **VMAX**: indicates the voltage value from the highest point of the waveform to the GND.
+* **VRMS**: indicates the root mean square value on the whole waveform or in the gating area.
+* **VAVG**: indicates the root-mean-square value of the waveforms, with the DC component removed.
+* **OVER**: indicates the ratio of the difference between the maximum value and the top value of the waveform to the amplitude value.
+* **FREQ**: defined as the reciprocal of period.
+* **PER**: defined as the time between the middle threshold points of two consecutive, like-polarity edges.
+
+For more detailed information about ***:MEASure Commands*** see [DHO Progamming Guide (Jul 2023)](/doc/rigol_dho800_900_prog_man.pdf) section 3.17
+
+```python
+with DHO800(address = "10.0.0.123") as dho:
+    # gets voltage peak to peak
+    volt = float(dho.get_channel_measurement(type='VPP', channel=0))
+    # gets phase from rising edge refchannel to rising edge channel
+    phase_riserise = float(dho.get_channel_measurement(type='RRPH',channel=1, refchannel=0))
 ```
 
 ## Supported methods
@@ -135,6 +161,9 @@ More documentation in progress ...
 * ```get_channel_probe_ratio(channel)```
 * ```set_channel_scale(channel, scale)```
 * ```get_channel_scale(channel)```
+* ```set_channel_bandwidth(channel, scale)```
+* ```get_channel_bandwidth(channel)```
+* ```get_channel_measurement(type, channel[, refchannel])```
 * ```query_waveform(channel, stats = None)```
 * ```off()```
 
