@@ -131,7 +131,7 @@ with DHO800(address = "10.0.0.123") as dho:
     # gets voltage peak to peak
     volt = float(dho.get_channel_measurement(type='VPP', channel=0))
     # gets phase from rising edge refchannel to rising edge channel
-    phase_riserise = float(dho.get_channel_measurement(type='RRPH', refchannel=0 ,channel=1))
+    phase_riserise = float(dho.get_channel_measurement(type='RRPH',channel=1, refchannel=0))
 ```
 
 ## Supported methods
@@ -163,7 +163,7 @@ More documentation in progress ...
 * ```get_channel_scale(channel)```
 * ```set_channel_bandwidth(channel, scale)```
 * ```get_channel_bandwidth(channel)```
-* ```get_channel_measurement(channel)```
+* ```get_channel_measurement(type, channel[, refchannel])```
 * ```query_waveform(channel, stats = None)```
 * ```off()```
 
