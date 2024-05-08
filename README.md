@@ -33,6 +33,7 @@ pip install pydho800
 
 ```python
 from pydho800.pydho800 import PYDHO800
+from labdevices.oscilloscope import OscilloscopeRunMode
 
 with PYDHO800(address = "10.0.0.123") as dho:
     print(f"Identify: {dho.identify()}")
