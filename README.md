@@ -34,7 +34,7 @@ pip install pydho800
 ```python
 from pydho800.pydho800 import PYDHO800
 
-with DHO800(address = "10.0.0.123") as dho:
+with PYDHO800(address = "10.0.0.123") as dho:
     print(f"Identify: {dho.identify()}")
 
     dho.set_channel_enable(0, True)
